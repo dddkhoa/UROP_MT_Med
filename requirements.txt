@@ -1,0 +1,15 @@
+torch
+torchvision
+torchaudio
+wandb
+tqdm
+py-cpuinfo
+hydra-core
+omegaconf
+lightning
+transformers
+openai
+unsloth
+vllm
+nltk
+pre-commit

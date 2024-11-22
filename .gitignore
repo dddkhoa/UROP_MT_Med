@@ -1,0 +1,4 @@
+Clean_Medict.xlsx
+__pycache__/
+wandb/
+.env

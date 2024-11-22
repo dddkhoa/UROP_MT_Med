@@ -1,0 +1,14 @@
+defaults:
+  # Common setup.
+  - setup
+  # This file.
+  - _self_
+  # - optional override:
+
+model:
+  name: unsloth/Qwen2.5-7B-Instruct
+  rank: 16
+
+load_in_4bit: True
+max_seq_length: -1
+dtype: null

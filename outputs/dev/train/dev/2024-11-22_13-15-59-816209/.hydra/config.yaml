@@ -1,0 +1,17 @@
+seed: ${generate_random_seed:}
+data_dir: ${hydra:runtime.cwd}/data
+outputs_dir: null
+outputs_subdir: dev
+job_subdir: dev
+wandb:
+  project: mt_med
+  dir: ${hydra:runtime.cwd}/outputs
+  mode: offline
+  anonymous: allow
+  tags:
+  - development
+model:
+  name: unsloth/Qwen2.5-7B-Instruct
+load_in_4bit: true
+max_seq_length: -1
+dtype: null
