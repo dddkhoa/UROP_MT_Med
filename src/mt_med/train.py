@@ -7,10 +7,12 @@ from pathlib import Path
 import hydra
 from omegaconf import DictConfig, OmegaConf
 from datasets import load_dataset, Dataset
+import nltk
 
 from unsloth import FastLanguageModel, is_bfloat16_supported
 from trl import SFTTrainer
 from transformers import TrainingArguments
+import torch
 
 
 LOGGER = logging.getLogger("MINT")
@@ -42,7 +44,14 @@ def main(config: DictConfig):
         loftq_config = None, # And LoftQ
     )
 
-    alpaca_prompt = """Translate the input sentence to Vietnamese. Do not prefix your response with any additional information. Just output the translated sentence.
+    # model, tokenizer = FastLanguageModel.from_pretrained(
+    #     model_name = os.path.join(config.outputs_dir, "lora_model"),
+    #     max_seq_length = config.max_seq_length,
+    #     dtype = config.dtype,
+    #     load_in_4bit = config.load_in_4bit,
+    # )
+
+    alpaca_prompt = """Translate the input sentence to Vietnamese.
     ### Input:
     {}
 
@@ -63,17 +72,19 @@ def main(config: DictConfig):
 
     dataset = load_dataset("nhuvo/MedEV")
 
-    # splitindex = len(dataset['test']['text']) // 2
-    # inp = dataset['test']['text'][0:splitindex]
-    # outp = dataset['test']['text'][splitindex:]
-    
+    splitindex = len(dataset['test']['text']) // 2
+    inp = dataset['test']['text'][0:splitindex]
+    outp = dataset['test']['text'][splitindex:]
+
     splitindex_train = len(dataset['train']['text']) // 2
     inp_train = dataset['train']['text'][0:splitindex_train]
     outp_train = dataset['train']['text'][splitindex_train:]
 
     dataset = Dataset.from_dict({"input": inp_train, "output": outp_train})
+    dataset = dataset.map(formatting_prompts_func, batched = True, num_proc=4)
 
-    dataset = dataset.map(formatting_prompts_func, batched = True)
+    LOGGER.info(f"Sample data: {dataset['text'][0]}")
+
 
     trainer = SFTTrainer(
         model = model,
@@ -84,12 +95,12 @@ def main(config: DictConfig):
         dataset_num_proc = 2,
         packing = False, # Can make training 5x faster for short sequences.
         args = TrainingArguments(
-            per_device_train_batch_size = 2,
+            per_device_train_batch_size = 16,
             gradient_accumulation_steps = 4,
             warmup_steps = 5,
-            # num_train_epochs = 1, # Set this for 1 full training run.
+            num_train_epochs = 1, 
             max_steps = 60,
-            learning_rate = 2e-4,
+            learning_rate = 3e-4,
             fp16 = not is_bfloat16_supported(),
             bf16 = is_bfloat16_supported(),
             logging_steps = 1,
@@ -97,7 +108,7 @@ def main(config: DictConfig):
             weight_decay = 0.01,
             lr_scheduler_type = "linear",
             seed = 47,
-            output_dir = "config.outputs_dir",
+            output_dir = config.outputs_dir,
             report_to = "none", # wandb
         )
     )
@@ -106,6 +117,31 @@ def main(config: DictConfig):
 
     LOGGER.info(f"Trainer stats: {trainer_stats}")
 
+    model.save_pretrained(os.path.join(config.outputs_dir, "lora_model"))
+    tokenizer.save_pretrained(os.path.join(config.outputs_dir, "lora_model"))
+
+    FastLanguageModel.for_inference(model)
+
+    allbleusc = []
+    for i in range(100):
+        inputs = tokenizer(
+        [
+            alpaca_prompt.format(
+                # "Translate the input sentence to Vietnamese.", # instruction
+                inp[i], # input
+                "", # output - leave this blank for generation!
+            )
+        ], return_tensors = "pt").to("cuda")
+
+        outputs = model.generate(**inputs, max_new_tokens = 64, use_cache = True)
+        response = tokenizer.batch_decode(outputs, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
+        start_response_idx = response.find("### Response:\n") + len("### Response:\n")
+        response = response[start_response_idx+1:].strip()
+
+        bleusc = nltk.translate.bleu_score.sentence_bleu([outp[i].split()], response.split())
+        allbleusc.append(bleusc)
+
+    LOGGER.info(f"Average bleu: {sum(allbleusc) / len(allbleusc)}")
 
 if __name__ == "__main__":
     main()

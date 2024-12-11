@@ -6,7 +6,7 @@ defaults:
   # - optional override:
 
 model:
-  name: unsloth/Qwen2.5-7B
+  name: unsloth/Qwen2.5-7B-Instruct
   rank: 16
 
 load_in_4bit: True
