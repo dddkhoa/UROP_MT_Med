@@ -23,7 +23,7 @@ LOGGER = logging.getLogger("MINT")
 )
 def main(config: DictConfig):
     model, tokenizer = FastLanguageModel.from_pretrained(
-        model_name = "unsloth/Meta-Llama-3.1-8B-Instruct-bnb-4bit",
+        model_name = config.model.name,
         max_seq_length = config.max_seq_length,
         dtype = config.dtype,
         load_in_4bit = config.load_in_4bit,

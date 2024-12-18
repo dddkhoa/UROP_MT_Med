@@ -85,7 +85,6 @@ def main(config: DictConfig):
 
     LOGGER.info(f"Sample data: {dataset['text'][0]}")
 
-
     trainer = SFTTrainer(
         model = model,
         tokenizer = tokenizer,
