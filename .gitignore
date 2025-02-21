@@ -4,3 +4,4 @@ wandb/
 .env
 outputs/
 *.txt
+unsloth_compiled_cache/
