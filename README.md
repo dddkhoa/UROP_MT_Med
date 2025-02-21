@@ -17,7 +17,7 @@ The project uses the Unsloth-optimized Qwen-2.5-7B model and implements supervis
 - transformers
 - unsloth
 - datasets
-- nltk
+- evaluate
 - hydra-core
 - omegaconf
 
@@ -102,7 +102,7 @@ The training pipeline consists of several key steps:
 
 5. **Evaluation**
    - Performs validation during training
-   - Calculates BLEU scores on test set
+   - Calculates SacreBLEU scores on test set (using HuggingFace's evaluate library)
    - Generates translations with max 64 new tokens
 
 ## Usage
@@ -145,7 +145,7 @@ The training pipeline consists of several key steps:
    - Training logs include:
      - Training statistics
      - Validation metrics
-     - Final BLEU scores
+     - Final SacreBLEU scores
 
 ## Model Features
 
@@ -157,7 +157,7 @@ The training pipeline consists of several key steps:
 
 - **Evaluation Metrics**
   - Real-time validation during training
-  - BLEU score calculation on test set
+  - SacreBLEU score calculation on test set (industry standard metric)
   - Detailed logging of training statistics
 
 ## Notes
@@ -165,7 +165,7 @@ The training pipeline consists of several key steps:
 - The model requires a Hugging Face token for downloading
 - Training is optimized for CUDA-enabled devices
 - The implementation supports both FP16 and BF16 precision based on hardware capability
-- Evaluation is performed using NLTK's BLEU score implementation
+- Evaluation uses SacreBLEU from HuggingFace's evaluate library for industry-standard BLEU score calculation
 
 ## License
 

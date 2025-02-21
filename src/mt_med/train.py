@@ -9,6 +9,7 @@ import hydra
 from omegaconf import DictConfig, OmegaConf
 from datasets import Dataset
 import nltk
+import evaluate
 
 from unsloth import FastLanguageModel, is_bfloat16_supported
 from trl import SFTTrainer
@@ -160,8 +161,11 @@ def main(config: DictConfig):
     FastLanguageModel.for_inference(model)
 
     # ===== 9. Model Evaluation =====
-    # Evaluate the model on test set using BLEU score
-    allbleusc = []
+    # Evaluate the model on test set using SacreBLEU score
+    sacrebleu = evaluate.load("sacrebleu")
+    predictions = []
+    references = []
+
     for i in range(len(test_en)):
         # Generate translations for test inputs
         inputs = tokenizer(
@@ -179,13 +183,13 @@ def main(config: DictConfig):
         # Extract the generated translation
         start_response_idx = response.find("### Response:\n") + len("### Response:\n")
         response = response[start_response_idx+1:].strip()
+        
+        predictions.append(response)
+        references.append([test_vi[i]])  # SacreBLEU expects a list of references for each prediction
 
-        # Calculate BLEU score for each translation
-        bleusc = nltk.translate.bleu_score.sentence_bleu([test_vi[i].split()], response.split())
-        allbleusc.append(bleusc)
-
-    # Log final evaluation results
-    LOGGER.info(f"Average bleu: {sum(allbleusc) / len(allbleusc)}")
+    # Calculate and log BLEU score
+    results = sacrebleu.compute(predictions=predictions, references=references)
+    LOGGER.info(f"SacreBLEU score: {results['score']}")
 
 if __name__ == "__main__":
     main()

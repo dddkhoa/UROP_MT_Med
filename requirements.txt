@@ -1,6 +1,6 @@
-# torch
-# torchvision
-# torchaudio
+torch
+torchvision
+torchaudio
 wandb
 tqdm
 py-cpuinfo
@@ -14,3 +14,4 @@ vllm
 nltk
 pre-commit
 datasets
+evaluate
