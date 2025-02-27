@@ -160,6 +160,41 @@ The training pipeline consists of several key steps:
   - SacreBLEU score calculation on test set (industry standard metric)
   - Detailed logging of training statistics
 
+## Experimental Results
+
+### 1. Direct In-context Prompting (DIPMT) Results
+BLEU scores tested on 500 sentences from MedEV, with few-shots selected randomly:
+
+| Model        | 0-shot (e-v) | 0-shot (v-e) | 1-shot (e-v) | 1-shot (v-e) | 3-shot (e-v) | 3-shot (v-e) |
+|-------------|-------------|-------------|-------------|-------------|-------------|-------------|
+| Qwen2.5-0.5B | 9.56        | 12.26       | 12.00       | 11.42       | 11.56       | 10.54       |
+| Qwen2.5-3B   | 27.40       | 22.14       | 26.50       | 20.69       | 26.00       | 19.94       |
+| Qwen2.5-7B   | 32.69       | 23.28       | 32.86       | 24.90       | 32.27       | 24.30       |
+
+### 2. LoRA Fine-tuning Results
+BLEU scores trained on trainset of MedEV, tested on 100 test sentences:
+
+| Model                           | BLEU Score |
+|--------------------------------|------------|
+| Qwen2.5-7B                     | 14.93      |
+| Qwen2.5-7B-Finetuned          | 28.41      |
+| Qwen2.5-7B-Instruct           | 12.47      |
+| Qwen2.5-7B-Instruct-Finetuned | 25.50      |
+| Llama3.2-8B-Instruct          | 13.91      |
+| Llama3.2-8B-Instruct-Finetuned| 27.03      |
+
+**Note**: Improvements from fine-tuning mostly come from model following output format in fine-tuning prompt, not actual translation capability.
+
+Number of trainable parameters = 40,370,176 = 0.5% of original model size
+
+### 3. Multiturn Prompting Results
+BLEU scores tested on 500 sentences from MedEV, using Llama3.1-8B-Instruct:
+
+| Method              | Overall BLEU |
+|--------------------|--------------|
+| Direct Prompting   | 38.13        |
+| Multiturn Prompting| 36.86        |
+
 ## Notes
 
 - The model requires a Hugging Face token for downloading
